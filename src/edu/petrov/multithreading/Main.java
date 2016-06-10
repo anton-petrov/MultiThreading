@@ -1,6 +1,7 @@
 package edu.petrov.multithreading;
 
 import java.util.Random;
+import java.util.stream.IntStream;
 
 class MySemaphore implements Semaphore {
 
@@ -82,20 +83,18 @@ public class Main {
 
     private static void testMySemaphore() {
         MySemaphore semaphore = new MySemaphore(2);
-
-        for (int i = 1; i <= 10; i++) {
-            final Integer threadNumber = i;
+        IntStream.range(0, 10).forEach((i) -> {
             new Thread(() -> {
                 try {
                     semaphore.acquire();
-                    System.out.println("Thread #" + threadNumber + " started!");
+                    System.out.println("Thread #" + i + " started!");
                     Thread.sleep(getRandomInteger(1000, 2000));
                     semaphore.release();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }).start();
-        }
+        });
     }
 
     public static void main(String[] args) throws InterruptedException {
