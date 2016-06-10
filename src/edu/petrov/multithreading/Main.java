@@ -5,49 +5,64 @@ import java.util.Random;
 class MySemaphore implements Semaphore {
 
     private volatile int permits;
+    private final Object lock = new Object();
 
     public MySemaphore(int permits) {
         this.permits = permits;
     }
 
-    public synchronized void setPermits(int permits) {
-        this.permits = permits >= 0 ? permits : 0;
-    }
-
-    @Override
-    public synchronized void acquire() throws InterruptedException {
-        while (permits == 0) {
-            wait();
+    public void setPermits(int permits) {
+        synchronized (lock) {
+            this.permits = permits >= 0 ? permits : 0;
         }
-        decrementPermits(1);
     }
 
     @Override
-    public synchronized void acquire(int permits) throws InterruptedException {
-        while (this.permits - permits <= 0) {
-            wait();
+    public void acquire() throws InterruptedException {
+        synchronized (lock) {
+            while (permits == 0) {
+                lock.wait();
+            }
+            decrementPermits(1);
         }
-        decrementPermits(permits);
-    }
-
-    private synchronized void decrementPermits(int permits) {
-        setPermits(this.permits - permits);
-    }
-
-    private synchronized void incrementPermits(int permits) {
-        setPermits(this.permits + permits);
     }
 
     @Override
-    public synchronized void release() {
-        incrementPermits(1);
-        notifyAll();
+    public void acquire(int permits) throws InterruptedException {
+        synchronized (lock) {
+            while (this.permits - permits <= 0) {
+                lock.wait();
+            }
+            decrementPermits(permits);
+        }
+    }
+
+    private void decrementPermits(int permits) {
+        synchronized (lock) {
+            setPermits(this.permits - permits);
+        }
+    }
+
+    private void incrementPermits(int permits) {
+        synchronized (lock) {
+            setPermits(this.permits + permits);
+        }
     }
 
     @Override
-    public synchronized void release(int permits) {
-        incrementPermits(permits);
-        notifyAll();
+    public void release() {
+        synchronized (lock) {
+            incrementPermits(1);
+            lock.notifyAll();
+        }
+    }
+
+    @Override
+    public void release(int permits) {
+        synchronized (lock) {
+            incrementPermits(permits);
+            lock.notifyAll();
+        }
     }
 
     @Override
@@ -65,9 +80,7 @@ public class Main {
         return random.nextInt(highBound - lowBound) + lowBound;
     }
 
-    public static void main(String[] args) throws InterruptedException {
-
-
+    private static void testMySemaphore() {
         MySemaphore semaphore = new MySemaphore(2);
 
         for (int i = 1; i <= 10; i++) {
@@ -83,5 +96,9 @@ public class Main {
                 }
             }).start();
         }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        testMySemaphore();
     }
 }
