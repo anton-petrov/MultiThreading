@@ -98,6 +98,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        testMySemaphore();
+        int[] array = new int[]{1, 2, 3, 4}; // 1 + 4 + 9 + 16
+        System.out.println(new MySquareSum().getSquareSum(array, 2));
     }
 }
