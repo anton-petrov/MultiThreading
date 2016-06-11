@@ -52,14 +52,18 @@ public class MySquareSum implements SquareSum {
 
     @Override
     public long getSquareSum(int[] values, int numberOfThreads) throws InterruptedException {
+        if (numberOfThreads > values.length) {
+            numberOfThreads = values.length / 2;
+        }
         long[] results = new long[numberOfThreads];
         Phaser phaser = new Phaser();
         phaser.register();
         for (int beginIndex = 0, resultIndex = 0, numberOfElements = values.length / numberOfThreads;
-             beginIndex < values.length;
+             resultIndex < numberOfThreads;
              beginIndex += numberOfElements, resultIndex++) {
 
-            executors.submit(new SquareSumThread(phaser, results, resultIndex, values, beginIndex, beginIndex + numberOfElements));
+            int endIndex = resultIndex == numberOfThreads - 1 ? values.length : beginIndex + numberOfElements;
+            executors.submit(new SquareSumThread(phaser, results, resultIndex, values, beginIndex, endIndex));
         }
         phaser.arriveAndAwaitAdvance();
         return Arrays.stream(results).reduce(0, (a, b) -> a + b);
