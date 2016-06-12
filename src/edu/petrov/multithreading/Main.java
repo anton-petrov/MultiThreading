@@ -2,27 +2,30 @@ package edu.petrov.multithreading;
 
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 class MySemaphore implements Semaphore {
 
-    private volatile int permits;
+    private final AtomicInteger permits = new AtomicInteger(0);
     private final Object lock = new Object();
 
-    public MySemaphore(int permits) {
-        this.permits = permits;
+    public MySemaphore(final int permits) {
+        setPermits(permits);
     }
 
-    public void setPermits(int permits) {
-        synchronized (lock) {
-            this.permits = permits >= 0 ? permits : 0;
-        }
+    private void setPermits(final int permits) {
+        this.permits.set(permits);
+    }
+
+    private int getPermits() {
+        return this.permits.get();
     }
 
     @Override
     public void acquire() throws InterruptedException {
         synchronized (lock) {
-            while (permits == 0) {
+            while (!(getPermits() > 0)) {
                 lock.wait();
             }
             decrementPermits(1);
@@ -32,7 +35,7 @@ class MySemaphore implements Semaphore {
     @Override
     public void acquire(int permits) throws InterruptedException {
         synchronized (lock) {
-            while (this.permits - permits <= 0) {
+            while (getPermits() - permits <= 0) {
                 lock.wait();
             }
             decrementPermits(permits);
@@ -40,15 +43,11 @@ class MySemaphore implements Semaphore {
     }
 
     private void decrementPermits(int permits) {
-        synchronized (lock) {
-            setPermits(this.permits - permits);
-        }
+        this.permits.getAndAdd(-permits);
     }
 
     private void incrementPermits(int permits) {
-        synchronized (lock) {
-            setPermits(this.permits + permits);
-        }
+        this.permits.getAndAdd(permits);
     }
 
     @Override
@@ -69,7 +68,7 @@ class MySemaphore implements Semaphore {
 
     @Override
     public int getAvailablePermits() {
-        return permits;
+        return permits.get();
     }
 }
 
