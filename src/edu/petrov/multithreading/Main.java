@@ -1,6 +1,7 @@
 package edu.petrov.multithreading;
 
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 
 class MySemaphore implements Semaphore {
@@ -97,8 +98,8 @@ public class Main {
         });
     }
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
         int[] array = new int[]{1, 2, 3, 4}; // 1 + 4 + 9 + 16
-        System.out.println(new MySquareSum().getSquareSum(array, 4));
+        System.out.println(new MySquareSum().__getSquareSum(array, 4));
     }
 }
